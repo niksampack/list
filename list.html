@@ -129,7 +129,7 @@
         let globalCustomers = []; // To store data for export
 
         // 1. LISTEN TO DATA (Real-time)
-        const q = query(dbRef, orderBy("day")); // Sort by day usually? Or name.
+        const q = query(dbRef, orderBy("day")); 
         
         onSnapshot(q, (snapshot) => {
             statusIndicator.innerText = "Online";
@@ -219,7 +219,7 @@
             }
         }
 
-        // 4. EXPORT FUNCTIONS (Attached to window to work with HTML onclick)
+        // 4. EXPORT FUNCTIONS
         window.exportCSV = function() {
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
             csvContent += "Name,Restaurant,Adresse,Telefon,Referenz,Liefertag\n";
@@ -234,16 +234,22 @@
             link.click();
         }
 
+        // --- UPDATED PDF FUNCTION (Landscape + All Columns) ---
         window.exportPDF = function() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            
+            // Set orientation to Landscape (Horizontal) for more space
+            const doc = new jsPDF({ orientation: "landscape" });
+            
             doc.text("Kundenliste (Online)", 14, 20);
             
-            const tableColumn = ["Name", "Restaurant", "Telefon", "Tag"];
+            // Added Address and Referer columns
+            const tableColumn = ["Name", "Restaurant", "Adresse", "Telefon", "Referenz", "Tag"];
             const tableRows = [];
 
             globalCustomers.forEach(c => {
-                const clientData = [c.name, c.restaurant, c.phone, c.day];
+                // Mapped all fields
+                const clientData = [c.name, c.restaurant, c.address, c.phone, c.referer, c.day];
                 tableRows.push(clientData);
             });
 

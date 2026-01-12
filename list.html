@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kunden-Management App (Online)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+
+    <nav class="bg-indigo-700 p-4 shadow-lg text-white sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold"><i class="fas fa-cloud mr-2"></i>LieferApp Online</h1>
+            <div id="statusIndicator" class="text-xs bg-yellow-500 py-1 px-3 rounded-full animate-pulse">Verbinden...</div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8 border-t-4 border-indigo-500">
+            <h2 class="text-2xl font-bold mb-6 text-gray-700">Neuen Kunden anlegen</h2>
+            <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Name des Kunden</label>
+                    <input type="text" id="name" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Name des Restaurants</label>
+                    <input type="text" id="restaurant" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Adresse</label>
+                    <input type="text" id="address" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Telefonnummer</label>
+                    <input type="text" id="phone" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Ansprechpartner / Referenz</label>
+                    <input type="text" id="referer" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Liefertag</label>
+                    <select id="day" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="Montag">Montag</option>
+                        <option value="Dienstag">Dienstag</option>
+                        <option value="Mittwoch">Mittwoch</option>
+                        <option value="Donnerstag">Donnerstag</option>
+                        <option value="Freitag">Freitag</option>
+                        <option value="Samstag">Samstag</option>
+                        <option value="Sonntag">Sonntag</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2 mt-4">
+                    <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center">
+                        <i class="fas fa-plus-circle mr-2"></i> Speichern (Server)
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-green-500">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4 md:mb-0">Kundenliste</h2>
+                <div class="flex gap-2">
+                    <button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded shadow flex items-center">
+                        <i class="fas fa-file-excel mr-2"></i> CSV
+                    </button>
+                    <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded shadow flex items-center">
+                        <i class="fas fa-file-pdf mr-2"></i> PDF
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto" id="dataTable">
+                    <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <tr>
+                            <th class="py-3 px-6 text-left">Kunde</th>
+                            <th class="py-3 px-6 text-left">Restaurant</th>
+                            <th class="py-3 px-6 text-left">Adresse</th>
+                            <th class="py-3 px-6 text-center">Telefon</th>
+                            <th class="py-3 px-6 text-center">Tag</th>
+                            <th class="py-3 px-6 text-center">Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-gray-600 text-sm font-light">
+                        <tr><td colspan="6" class="text-center py-4">Laden...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import Firebase Functions from CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Your Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCY9TmJwzoJRWFTAjhDFBD0eFMR4YKTHJQ",
+            authDomain: "listapp-96713.firebaseapp.com",
+            projectId: "listapp-96713",
+            storageBucket: "listapp-96713.firebasestorage.app",
+            messagingSenderId: "1044312662356",
+            appId: "1:1044312662356:web:64fd48530c4238127828c1"
+        };
+
+        // Initialize
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const dbRef = collection(db, "customers");
+
+        // UI References
+        const statusIndicator = document.getElementById('statusIndicator');
+        const tableBody = document.getElementById('tableBody');
+        let globalCustomers = []; // To store data for export
+
+        // 1. LISTEN TO DATA (Real-time)
+        const q = query(dbRef, orderBy("day")); // Sort by day usually? Or name.
+        
+        onSnapshot(q, (snapshot) => {
+            statusIndicator.innerText = "Online";
+            statusIndicator.className = "text-xs bg-green-500 text-white py-1 px-3 rounded-full";
+            
+            tableBody.innerHTML = "";
+            globalCustomers = [];
+
+            if (snapshot.empty) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">Keine Daten vorhanden.</td></tr>';
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const c = docSnap.data();
+                const id = docSnap.id;
+                
+                // Add to global array for export
+                globalCustomers.push({ ...c, id });
+
+                const row = `
+                    <tr class="border-b border-gray-200 hover:bg-gray-100">
+                        <td class="py-3 px-6 text-left whitespace-nowrap font-medium">${c.name}</td>
+                        <td class="py-3 px-6 text-left">${c.restaurant}</td>
+                        <td class="py-3 px-6 text-left text-xs">${c.address}</td>
+                        <td class="py-3 px-6 text-center">${c.phone}</td>
+                        <td class="py-3 px-6 text-center"><span class="bg-blue-200 text-blue-600 py-1 px-3 rounded-full text-xs">${c.day}</span></td>
+                        <td class="py-3 px-6 text-center">
+                            <button class="delete-btn text-red-500 hover:text-red-700 transform hover:scale-110" data-id="${id}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+
+            // Attach event listeners to new delete buttons
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    deleteItem(id);
+                });
+            });
+
+        }, (error) => {
+            console.error(error);
+            statusIndicator.innerText = "Fehler";
+            statusIndicator.className = "text-xs bg-red-500 text-white py-1 px-3 rounded-full";
+            alert("Fehler beim Laden: " + error.message);
+        });
+
+        // 2. ADD DATA
+        document.getElementById('clientForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Speichern...';
+
+            try {
+                await addDoc(dbRef, {
+                    name: document.getElementById('name').value,
+                    restaurant: document.getElementById('restaurant').value,
+                    address: document.getElementById('address').value,
+                    phone: document.getElementById('phone').value,
+                    referer: document.getElementById('referer').value,
+                    day: document.getElementById('day').value,
+                    createdAt: new Date()
+                });
+                this.reset();
+            } catch (error) {
+                alert("Fehler beim Speichern: " + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-plus-circle mr-2"></i> Speichern (Server)';
+            }
+        });
+
+        // 3. DELETE DATA
+        window.deleteItem = async function(id) {
+            if(confirm('Möchten Sie diesen Eintrag wirklich löschen?')) {
+                try {
+                    await deleteDoc(doc(db, "customers", id));
+                } catch (error) {
+                    alert("Fehler beim Löschen: " + error.message);
+                }
+            }
+        }
+
+        // 4. EXPORT FUNCTIONS (Attached to window to work with HTML onclick)
+        window.exportCSV = function() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "Name,Restaurant,Adresse,Telefon,Referenz,Liefertag\n";
+            globalCustomers.forEach(c => {
+                csvContent += `"${c.name}","${c.restaurant}","${c.address}","${c.phone}","${c.referer}","${c.day}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "kundenliste_online.csv");
+            document.body.appendChild(link);
+            link.click();
+        }
+
+        window.exportPDF = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Kundenliste (Online)", 14, 20);
+            
+            const tableColumn = ["Name", "Restaurant", "Telefon", "Tag"];
+            const tableRows = [];
+
+            globalCustomers.forEach(c => {
+                const clientData = [c.name, c.restaurant, c.phone, c.day];
+                tableRows.push(clientData);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 30,
+            });
+
+            doc.save("kundenliste.pdf");
+        }
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kunden-Management App (Online)</title>
+    <title>Kunden-Management App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -23,32 +23,26 @@
         <div class="bg-white rounded-lg shadow-md p-6 mb-8 border-t-4 border-indigo-500">
             <h2 class="text-2xl font-bold mb-6 text-gray-700">Neuen Kunden anlegen</h2>
             <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Name des Kunden</label>
                     <input type="text" id="name" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Name des Restaurants</label>
                     <input type="text" id="restaurant" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-
                 <div class="md:col-span-2">
                     <label class="block text-gray-700 text-sm font-bold mb-2">Adresse</label>
                     <input type="text" id="address" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Telefonnummer</label>
                     <input type="text" id="phone" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Ansprechpartner / Referenz</label>
                     <input type="text" id="referer" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Liefertag</label>
                     <select id="day" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
@@ -61,7 +55,6 @@
                         <option value="Sonntag">Sonntag</option>
                     </select>
                 </div>
-
                 <div class="md:col-span-2 mt-4">
                     <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center">
                         <i class="fas fa-plus-circle mr-2"></i> Speichern (Server)
@@ -75,11 +68,18 @@
                 <h2 class="text-2xl font-bold text-gray-700 mb-4 md:mb-0">Kundenliste</h2>
                 <div class="flex gap-2">
                     <button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded shadow flex items-center">
-                        <i class="fas fa-file-excel mr-2"></i> CSV
+                        <i class="fas fa-file-excel mr-2"></i> CSV (Gefiltert)
                     </button>
                     <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded shadow flex items-center">
-                        <i class="fas fa-file-pdf mr-2"></i> PDF
+                        <i class="fas fa-file-pdf mr-2"></i> PDF (Gefiltert)
                     </button>
+                </div>
+            </div>
+
+            <div class="mb-4 relative">
+                <input type="text" id="searchInput" placeholder="Suche nach Restaurant, Tag oder Name..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-700 focus:outline-none focus:border-indigo-500">
+                <div class="absolute top-0 left-0 pt-2 pl-3">
+                    <i class="fas fa-search text-gray-400"></i>
                 </div>
             </div>
 
@@ -104,11 +104,9 @@
     </div>
 
     <script type="module">
-        // Import Firebase Functions from CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Your Config
         const firebaseConfig = {
             apiKey: "AIzaSyCY9TmJwzoJRWFTAjhDFBD0eFMR4YKTHJQ",
             authDomain: "listapp-96713.firebaseapp.com",
@@ -118,38 +116,62 @@
             appId: "1:1044312662356:web:64fd48530c4238127828c1"
         };
 
-        // Initialize
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const dbRef = collection(db, "customers");
 
-        // UI References
         const statusIndicator = document.getElementById('statusIndicator');
         const tableBody = document.getElementById('tableBody');
-        let globalCustomers = []; // To store data for export
+        const searchInput = document.getElementById('searchInput');
+        
+        // Two variables: one for ALL data, one for CURRENT visible data
+        let globalCustomers = []; 
+        let currentData = []; 
 
-        // 1. LISTEN TO DATA (Real-time)
+        // 1. LISTEN TO DATA
         const q = query(dbRef, orderBy("day")); 
         
         onSnapshot(q, (snapshot) => {
             statusIndicator.innerText = "Online";
             statusIndicator.className = "text-xs bg-green-500 text-white py-1 px-3 rounded-full";
             
-            tableBody.innerHTML = "";
-            globalCustomers = [];
+            globalCustomers = []; 
 
             if (snapshot.empty) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">Keine Daten vorhanden.</td></tr>';
+                renderTable([]);
                 return;
             }
 
             snapshot.forEach((docSnap) => {
                 const c = docSnap.data();
                 const id = docSnap.id;
-                
-                // Add to global array for export
                 globalCustomers.push({ ...c, id });
+            });
 
+            // On initial load, current data is EVERYTHING
+            currentData = globalCustomers;
+            
+            // If there was a search term before update, re-apply it
+            if(searchInput.value) {
+                filterData(searchInput.value);
+            } else {
+                renderTable(currentData);
+            }
+
+        }, (error) => {
+            console.error(error);
+            statusIndicator.innerText = "Fehler";
+            statusIndicator.className = "text-xs bg-red-500 text-white py-1 px-3 rounded-full";
+        });
+
+        // Function to render table
+        function renderTable(data) {
+            tableBody.innerHTML = "";
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">Keine Daten gefunden.</td></tr>';
+                return;
+            }
+            data.forEach((c) => {
                 const row = `
                     <tr class="border-b border-gray-200 hover:bg-gray-100">
                         <td class="py-3 px-6 text-left whitespace-nowrap font-medium">${c.name}</td>
@@ -158,7 +180,7 @@
                         <td class="py-3 px-6 text-center">${c.phone}</td>
                         <td class="py-3 px-6 text-center"><span class="bg-blue-200 text-blue-600 py-1 px-3 rounded-full text-xs">${c.day}</span></td>
                         <td class="py-3 px-6 text-center">
-                            <button class="delete-btn text-red-500 hover:text-red-700 transform hover:scale-110" data-id="${id}">
+                            <button class="delete-btn text-red-500 hover:text-red-700 transform hover:scale-110" data-id="${c.id}">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
@@ -167,19 +189,28 @@
                 tableBody.innerHTML += row;
             });
 
-            // Attach event listeners to new delete buttons
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const id = e.currentTarget.getAttribute('data-id');
                     deleteItem(id);
                 });
             });
+        }
 
-        }, (error) => {
-            console.error(error);
-            statusIndicator.innerText = "Fehler";
-            statusIndicator.className = "text-xs bg-red-500 text-white py-1 px-3 rounded-full";
-            alert("Fehler beim Laden: " + error.message);
+        // Filter Logic
+        function filterData(searchTerm) {
+            searchTerm = searchTerm.toLowerCase();
+            currentData = globalCustomers.filter(c => 
+                c.restaurant.toLowerCase().includes(searchTerm) || 
+                c.day.toLowerCase().includes(searchTerm) ||
+                c.name.toLowerCase().includes(searchTerm)
+            );
+            renderTable(currentData);
+        }
+
+        // Search Listener
+        searchInput.addEventListener('input', (e) => {
+            filterData(e.target.value);
         });
 
         // 2. ADD DATA
@@ -188,7 +219,6 @@
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Speichern...';
-
             try {
                 await addDoc(dbRef, {
                     name: document.getElementById('name').value,
@@ -200,8 +230,12 @@
                     createdAt: new Date()
                 });
                 this.reset();
+                // Clear search after add to show all
+                searchInput.value = '';
+                currentData = globalCustomers;
+                renderTable(currentData);
             } catch (error) {
-                alert("Fehler beim Speichern: " + error.message);
+                alert("Fehler: " + error.message);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-plus-circle mr-2"></i> Speichern (Server)';
@@ -210,45 +244,43 @@
 
         // 3. DELETE DATA
         window.deleteItem = async function(id) {
-            if(confirm('Möchten Sie diesen Eintrag wirklich löschen?')) {
-                try {
-                    await deleteDoc(doc(db, "customers", id));
-                } catch (error) {
-                    alert("Fehler beim Löschen: " + error.message);
-                }
+            if(confirm('Löschen?')) {
+                await deleteDoc(doc(db, "customers", id));
             }
         }
 
-        // 4. EXPORT FUNCTIONS
+        // 4. EXPORT FUNCTIONS (Uses currentData now!)
         window.exportCSV = function() {
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
             csvContent += "Name,Restaurant,Adresse,Telefon,Referenz,Liefertag\n";
-            globalCustomers.forEach(c => {
+            // IMPORTANT: Uses currentData (filtered) instead of globalCustomers
+            currentData.forEach(c => {
                 csvContent += `"${c.name}","${c.restaurant}","${c.address}","${c.phone}","${c.referer}","${c.day}"\n`;
             });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "kundenliste_online.csv");
+            link.setAttribute("download", "liste_gefiltert.csv");
             document.body.appendChild(link);
             link.click();
         }
 
-        // --- UPDATED PDF FUNCTION (Landscape + All Columns) ---
         window.exportPDF = function() {
             const { jsPDF } = window.jspdf;
-            
-            // Set orientation to Landscape (Horizontal) for more space
             const doc = new jsPDF({ orientation: "landscape" });
             
-            doc.text("Kundenliste (Online)", 14, 20);
+            // Add Title with filter info
+            let title = "Kundenliste";
+            if(searchInput.value) {
+                title += " (Suche: " + searchInput.value + ")";
+            }
+            doc.text(title, 14, 20);
             
-            // Added Address and Referer columns
             const tableColumn = ["Name", "Restaurant", "Adresse", "Telefon", "Referenz", "Tag"];
             const tableRows = [];
 
-            globalCustomers.forEach(c => {
-                // Mapped all fields
+            // IMPORTANT: Uses currentData (filtered)
+            currentData.forEach(c => {
                 const clientData = [c.name, c.restaurant, c.address, c.phone, c.referer, c.day];
                 tableRows.push(clientData);
             });
@@ -259,7 +291,7 @@
                 startY: 30,
             });
 
-            doc.save("kundenliste.pdf");
+            doc.save("liste_gefiltert.pdf");
         }
     </script>
 </body>

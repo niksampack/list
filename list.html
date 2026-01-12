@@ -8,6 +8,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        /* Style for Autocomplete Dropdown */
+        .suggestions-list {
+            position: absolute;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 50;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-top: 2px;
+        }
+        .suggestions-list li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .suggestions-list li:hover {
+            background-color: #ebf8ff;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 font-sans leading-normal tracking-normal">
 
@@ -20,29 +43,37 @@
 
     <div class="container mx-auto p-4 md:p-8">
         
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8 border-t-4 border-indigo-500">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8 border-t-4 border-indigo-500 relative">
             <h2 class="text-2xl font-bold mb-6 text-gray-700">Neuen Kunden anlegen</h2>
+            
             <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div class="relative">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Name des Restaurants</label>
+                    <input type="text" id="restaurant" autocomplete="off" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400" placeholder="Tippen zum Suchen...">
+                    <ul id="suggestions" class="suggestions-list hidden"></ul>
+                </div>
+
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Name des Kunden</label>
                     <input type="text" id="name" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Name des Restaurants</label>
-                    <input type="text" id="restaurant" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
+
                 <div class="md:col-span-2">
                     <label class="block text-gray-700 text-sm font-bold mb-2">Adresse</label>
-                    <input type="text" id="address" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="address" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50">
                 </div>
+
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Telefonnummer</label>
-                    <input type="text" id="phone" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="phone" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50">
                 </div>
+
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Ansprechpartner / Referenz</label>
                     <input type="text" id="referer" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
+
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Liefertag</label>
                     <select id="day" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
@@ -55,6 +86,7 @@
                         <option value="Sonntag">Sonntag</option>
                     </select>
                 </div>
+
                 <div class="md:col-span-2 mt-4">
                     <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center">
                         <i class="fas fa-plus-circle mr-2"></i> Speichern (Server)
@@ -68,16 +100,16 @@
                 <h2 class="text-2xl font-bold text-gray-700 mb-4 md:mb-0">Kundenliste</h2>
                 <div class="flex gap-2">
                     <button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded shadow flex items-center">
-                        <i class="fas fa-file-excel mr-2"></i> CSV (Gefiltert)
+                        <i class="fas fa-file-excel mr-2"></i> CSV
                     </button>
                     <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded shadow flex items-center">
-                        <i class="fas fa-file-pdf mr-2"></i> PDF (Gefiltert)
+                        <i class="fas fa-file-pdf mr-2"></i> PDF
                     </button>
                 </div>
             </div>
 
             <div class="mb-4 relative">
-                <input type="text" id="searchInput" placeholder="Suche nach Restaurant, Tag oder Name..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-700 focus:outline-none focus:border-indigo-500">
+                <input type="text" id="searchInput" placeholder="Suche in der Liste..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-700 focus:outline-none focus:border-indigo-500">
                 <div class="absolute top-0 left-0 pt-2 pl-3">
                     <i class="fas fa-search text-gray-400"></i>
                 </div>
@@ -105,7 +137,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCY9TmJwzoJRWFTAjhDFBD0eFMR4YKTHJQ",
@@ -118,17 +150,99 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
+        // References
         const dbRef = collection(db, "customers");
+        const bexioRef = collection(db, "bexio_contacts");
 
         const statusIndicator = document.getElementById('statusIndicator');
         const tableBody = document.getElementById('tableBody');
         const searchInput = document.getElementById('searchInput');
         
-        // Two variables: one for ALL data, one for CURRENT visible data
-        let globalCustomers = []; 
-        let currentData = []; 
+        // Autocomplete Elements
+        const restaurantInput = document.getElementById('restaurant');
+        const nameInput = document.getElementById('name');
+        const addressInput = document.getElementById('address');
+        const phoneInput = document.getElementById('phone');
+        const suggestionsList = document.getElementById('suggestions');
 
-        // 1. LISTEN TO DATA
+        let globalCustomers = []; 
+        let currentData = [];
+        let bexioData = []; // Store Bexio contacts here
+
+        // --- 1. LOAD BEXIO DATA (Once on startup) ---
+        async function loadBexioData() {
+            try {
+                const snapshot = await getDocs(bexioRef);
+                snapshot.forEach(doc => {
+                    bexioData.push(doc.data());
+                });
+                console.log("Bexio Data Loaded:", bexioData.length);
+            } catch (error) {
+                console.error("Error loading Bexio:", error);
+            }
+        }
+        loadBexioData();
+
+        // --- 2. AUTOCOMPLETE LOGIC ---
+        restaurantInput.addEventListener('input', function() {
+            const val = this.value.toLowerCase();
+            suggestionsList.innerHTML = '';
+            
+            if (!val || val.length < 2) {
+                suggestionsList.classList.add('hidden');
+                return;
+            }
+
+            // Search in Bexio Data (Restaurant OR Name)
+            const matches = bexioData.filter(c => 
+                (c.restaurant && c.restaurant.toLowerCase().includes(val)) || 
+                (c.name && c.name.toLowerCase().includes(val))
+            ).slice(0, 10); // Limit to 10 suggestions
+
+            if (matches.length > 0) {
+                suggestionsList.classList.remove('hidden');
+                matches.forEach(match => {
+                    const li = document.createElement('li');
+                    // Display: Restaurant (Name)
+                    let displayText = match.restaurant;
+                    if(match.name) displayText += ` <span class="text-xs text-gray-500">(${match.name})</span>`;
+                    
+                    li.innerHTML = displayText;
+                    
+                    li.addEventListener('click', () => {
+                        // Fill Form
+                        restaurantInput.value = match.restaurant || "";
+                        nameInput.value = match.name || "";
+                        addressInput.value = match.address || "";
+                        phoneInput.value = match.phone || "";
+                        
+                        // Highlight effects
+                        addressInput.classList.add('bg-green-50');
+                        phoneInput.classList.add('bg-green-50');
+                        setTimeout(() => {
+                            addressInput.classList.remove('bg-green-50');
+                            phoneInput.classList.remove('bg-green-50');
+                        }, 1000);
+
+                        suggestionsList.classList.add('hidden');
+                    });
+                    suggestionsList.appendChild(li);
+                });
+            } else {
+                suggestionsList.classList.add('hidden');
+            }
+        });
+
+        // Hide suggestions if clicked outside
+        document.addEventListener('click', function(e) {
+            if (e.target !== restaurantInput) {
+                suggestionsList.classList.add('hidden');
+            }
+        });
+
+
+        // --- 3. MAIN APP LOGIC (Table, Add, etc.) ---
         const q = query(dbRef, orderBy("day")); 
         
         onSnapshot(q, (snapshot) => {
@@ -136,35 +250,18 @@
             statusIndicator.className = "text-xs bg-green-500 text-white py-1 px-3 rounded-full";
             
             globalCustomers = []; 
-
-            if (snapshot.empty) {
-                renderTable([]);
-                return;
-            }
-
             snapshot.forEach((docSnap) => {
-                const c = docSnap.data();
-                const id = docSnap.id;
-                globalCustomers.push({ ...c, id });
+                globalCustomers.push({ ...docSnap.data(), id: docSnap.id });
             });
-
-            // On initial load, current data is EVERYTHING
             currentData = globalCustomers;
             
-            // If there was a search term before update, re-apply it
-            if(searchInput.value) {
-                filterData(searchInput.value);
-            } else {
-                renderTable(currentData);
-            }
-
+            if(searchInput.value) filterData(searchInput.value);
+            else renderTable(currentData);
         }, (error) => {
-            console.error(error);
             statusIndicator.innerText = "Fehler";
             statusIndicator.className = "text-xs bg-red-500 text-white py-1 px-3 rounded-full";
         });
 
-        // Function to render table
         function renderTable(data) {
             tableBody.innerHTML = "";
             if (data.length === 0) {
@@ -174,7 +271,7 @@
             data.forEach((c) => {
                 const row = `
                     <tr class="border-b border-gray-200 hover:bg-gray-100">
-                        <td class="py-3 px-6 text-left whitespace-nowrap font-medium">${c.name}</td>
+                        <td class="py-3 px-6 text-left font-medium">${c.name}</td>
                         <td class="py-3 px-6 text-left">${c.restaurant}</td>
                         <td class="py-3 px-6 text-left text-xs">${c.address}</td>
                         <td class="py-3 px-6 text-center">${c.phone}</td>
@@ -197,23 +294,18 @@
             });
         }
 
-        // Filter Logic
-        function filterData(searchTerm) {
-            searchTerm = searchTerm.toLowerCase();
+        function filterData(term) {
+            term = term.toLowerCase();
             currentData = globalCustomers.filter(c => 
-                c.restaurant.toLowerCase().includes(searchTerm) || 
-                c.day.toLowerCase().includes(searchTerm) ||
-                c.name.toLowerCase().includes(searchTerm)
+                (c.restaurant && c.restaurant.toLowerCase().includes(term)) || 
+                (c.day && c.day.toLowerCase().includes(term)) ||
+                (c.name && c.name.toLowerCase().includes(term))
             );
             renderTable(currentData);
         }
 
-        // Search Listener
-        searchInput.addEventListener('input', (e) => {
-            filterData(e.target.value);
-        });
+        searchInput.addEventListener('input', (e) => filterData(e.target.value));
 
-        // 2. ADD DATA
         document.getElementById('clientForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
@@ -221,16 +313,15 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Speichern...';
             try {
                 await addDoc(dbRef, {
-                    name: document.getElementById('name').value,
-                    restaurant: document.getElementById('restaurant').value,
-                    address: document.getElementById('address').value,
-                    phone: document.getElementById('phone').value,
+                    name: nameInput.value,
+                    restaurant: restaurantInput.value,
+                    address: addressInput.value,
+                    phone: phoneInput.value,
                     referer: document.getElementById('referer').value,
                     day: document.getElementById('day').value,
                     createdAt: new Date()
                 });
                 this.reset();
-                // Clear search after add to show all
                 searchInput.value = '';
                 currentData = globalCustomers;
                 renderTable(currentData);
@@ -242,25 +333,19 @@
             }
         });
 
-        // 3. DELETE DATA
         window.deleteItem = async function(id) {
-            if(confirm('Löschen?')) {
-                await deleteDoc(doc(db, "customers", id));
-            }
+            if(confirm('Löschen?')) await deleteDoc(doc(db, "customers", id));
         }
 
-        // 4. EXPORT FUNCTIONS (Uses currentData now!)
         window.exportCSV = function() {
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
             csvContent += "Name,Restaurant,Adresse,Telefon,Referenz,Liefertag\n";
-            // IMPORTANT: Uses currentData (filtered) instead of globalCustomers
             currentData.forEach(c => {
                 csvContent += `"${c.name}","${c.restaurant}","${c.address}","${c.phone}","${c.referer}","${c.day}"\n`;
             });
-            const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "liste_gefiltert.csv");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", "liste.csv");
             document.body.appendChild(link);
             link.click();
         }
@@ -268,30 +353,17 @@
         window.exportPDF = function() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: "landscape" });
-            
-            // Add Title with filter info
             let title = "Kundenliste";
-            if(searchInput.value) {
-                title += " (Suche: " + searchInput.value + ")";
-            }
+            if(searchInput.value) title += " (Suche: " + searchInput.value + ")";
             doc.text(title, 14, 20);
             
             const tableColumn = ["Name", "Restaurant", "Adresse", "Telefon", "Referenz", "Tag"];
             const tableRows = [];
-
-            // IMPORTANT: Uses currentData (filtered)
             currentData.forEach(c => {
-                const clientData = [c.name, c.restaurant, c.address, c.phone, c.referer, c.day];
-                tableRows.push(clientData);
+                tableRows.push([c.name, c.restaurant, c.address, c.phone, c.referer, c.day]);
             });
-
-            doc.autoTable({
-                head: [tableColumn],
-                body: tableRows,
-                startY: 30,
-            });
-
-            doc.save("liste_gefiltert.pdf");
+            doc.autoTable({ head: [tableColumn], body: tableRows, startY: 30 });
+            doc.save("liste.pdf");
         }
     </script>
 </body>
